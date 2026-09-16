@@ -1,0 +1,32 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "frontend": {
+      "root": "frontend/",
+      "framework": "vite",
+      "outputDirectory": "dist",
+      "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+    },
+    "backend": {
+      "root": "backend/",
+      "framework": "fastapi",
+      "entrypoint": "main:app",
+      "functions": {
+        "main.py": {
+          "maxDuration": 60,
+          "excludeFiles": "{tests/**,scripts/**,data/**,supabase/**,.venv/**,**/__pycache__/**,**/*.pyc,pytest.ini,requirements-dev.txt,README.md}"
+        }
+      }
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "backend" } },
+    { "source": "/(.*)", "destination": { "service": "frontend" } }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/keepalive",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+.scroll-to-top {
+  position: fixed;
+  right: 92px;
+  bottom: 28px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+  z-index: var(--z-scrolltop);
+}
+
+.scroll-to-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.scroll-to-top__progress {
+  display: grid;
+  place-items: center;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  border-radius: 50%;
+  background: var(--color-pr);
+  color: var(--white);
+}
+
+@media (max-width: 767px) {
+  .scroll-to-top {
+    right: 84px;
+    bottom: 23px;
+    width: 42px;
+    height: 42px;
+  }
+}

@@ -1,0 +1,7 @@
+# Runtime dependencies (cài trên Vercel).
+# Giữ tối thiểu để bundle nhỏ và cold start nhanh.
+fastapi==0.118.0
+pydantic==2.11.7
+pydantic-settings==2.10.1
+google-genai==1.46.0
+httpx==0.28.1

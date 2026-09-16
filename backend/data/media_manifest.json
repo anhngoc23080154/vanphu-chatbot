@@ -1,0 +1,26 @@
+[
+  {
+    "file": "poster-tong-quan.jpg",
+    "type": "image",
+    "title": "Poster tổng quan dự án Vlasta Premier Phú Thuận",
+    "description": "Poster giới thiệu tổng quan dự án: hai tòa tháp đôi cao cấp bên sông tại trung tâm Nam Sài Gòn, đường Đào Trí, phường Phú Thuận. Thể hiện phối cảnh toàn dự án, quy mô 2 tháp, 29 tầng căn hộ và khối đế thương mại dịch vụ.",
+    "tags": ["poster", "tổng quan", "phối cảnh", "giới thiệu dự án", "tháp đôi"],
+    "category": "poster"
+  },
+  {
+    "file": "mat-bang-tang-dien-hinh.jpg",
+    "type": "image",
+    "title": "Mặt bằng tầng điển hình tháp A",
+    "description": "Sơ đồ mặt bằng tầng căn hộ điển hình của tháp A, thể hiện vị trí 11 căn hộ từ căn 01 đến căn 11, hướng ban công, hướng cửa và lõi thang máy.",
+    "tags": ["mặt bằng", "layout", "tầng điển hình", "tháp A", "sơ đồ căn hộ"],
+    "category": "mat_bang"
+  },
+  {
+    "file": "tien-ich-ho-boi.jpg",
+    "type": "image",
+    "title": "Bể bơi và khu tiện ích trên cao",
+    "description": "Hình ảnh bể bơi vô cực ngoài trời rộng 500 m2 tại tầng 5 cùng khu tiện ích gym, yoga, pool bar và khu vui chơi trẻ em của dự án.",
+    "tags": ["tiện ích", "bể bơi", "hồ bơi", "gym", "khu vui chơi"],
+    "category": "tien_ich"
+  }
+]

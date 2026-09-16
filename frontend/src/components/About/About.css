@@ -1,0 +1,156 @@
+/* Section "Về chúng tôi" - gradient và typography lấy từ theme gốc */
+.about {
+  background: var(--about-gradient);
+  overflow: hidden;
+  padding-top: var(--header-height);
+}
+
+.about__inner {
+  display: flex;
+  align-items: center;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.about__media {
+  flex: 0 0 50%;
+  max-width: 50%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.about__media img {
+  width: 100%;
+  height: auto;
+}
+
+.about__content {
+  flex: 0 0 50%;
+  max-width: 50%;
+  padding: 40px 120px 40px 0;
+}
+
+.about__eyebrow {
+  color: var(--color-pr-soft);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  margin-bottom: 20px;
+  letter-spacing: 0.02em;
+}
+
+.about__title {
+  color: var(--white);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 140%;
+  margin-bottom: 20px;
+}
+
+.about__description {
+  color: var(--white);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 25.6px;
+  margin-top: 0.75rem;
+}
+
+/* Ba chỉ số: 23 / 1905 / 18 */
+.about__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding-top: 40px;
+}
+
+.about__stat {
+  text-align: center;
+}
+
+.about__stat:nth-child(2) {
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.about__stat-number {
+  color: var(--white);
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 57.6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.about__stat-label {
+  color: var(--white);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 25.6px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .about {
+    padding-top: calc(var(--header-height) + 58px);
+  }
+
+  .about__inner {
+    flex-direction: column-reverse;
+    min-height: 0;
+  }
+
+  .about__media,
+  .about__content {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .about__content {
+    padding: 0 10px 30px;
+  }
+
+  .about__stats {
+    gap: 0;
+    padding-top: 20px;
+  }
+
+  .about__stat {
+    padding: 10px;
+  }
+
+  .about__stat-number {
+    font-size: 32px;
+    line-height: 1.2;
+  }
+}
+
+@media (max-width: 767px) {
+  .about {
+    padding-top: calc(var(--header-height) + 48px);
+  }
+
+  .about__content {
+    padding: 0 15px 0;
+  }
+
+  .about__title {
+    font-size: 20px;
+  }
+
+  .about__eyebrow {
+    font-size: 16px;
+  }
+
+  .about__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .about__stat:nth-child(2) {
+    border-left: 0;
+    border-right: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .about__stat-number {
+    font-size: 28px;
+  }
+}

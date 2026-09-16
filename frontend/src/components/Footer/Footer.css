@@ -1,0 +1,150 @@
+/* Footer - nền tối #161616, nền hoạ tiết Vector-9.svg như bản gốc */
+.footer {
+  background-color: var(--neutral-pr);
+  background-image: url('/images/footer-bg.svg');
+  background-position: top left;
+  background-repeat: no-repeat;
+  padding: 62px 0 38px;
+}
+
+.footer__logo {
+  width: 230px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 12px;
+}
+
+.footer__intro {
+  color: var(--white);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 25.6px;
+  margin-bottom: 15px;
+}
+
+.footer__line {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin-bottom: 10px;
+}
+
+.footer__cols {
+  display: flex;
+  flex-wrap: wrap;
+  padding-top: 10px;
+}
+
+.footer__col {
+  padding-top: 10px;
+}
+
+.footer__col--contact {
+  flex: 0 0 50%;
+  max-width: 50%;
+  padding-right: 50px;
+}
+
+.footer__cols .footer__col:nth-child(2) {
+  flex: 0 0 29%;
+  max-width: 29%;
+}
+
+.footer__cols .footer__col:nth-child(3) {
+  flex: 0 0 21%;
+  max-width: 21%;
+}
+
+.footer__title {
+  color: var(--white);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.footer__list li {
+  padding-bottom: 6px;
+  margin-top: 6px;
+}
+
+.footer__list a {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #e4e4e4;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 160%;
+  transition: color 0.3s;
+}
+
+.footer__list a:hover,
+.footer__list a:hover span {
+  color: var(--color-pr);
+}
+
+.footer__icon {
+  flex: 0 0 auto;
+  margin-top: 4px;
+  color: var(--white);
+}
+
+.footer__list--menu li {
+  margin-bottom: 6px;
+}
+
+.footer__note {
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 160%;
+  padding-top: 20px;
+}
+
+.footer__note a {
+  color: var(--color-pr);
+  text-decoration: underline;
+}
+
+.footer__copyright {
+  color: var(--white);
+  font-size: 14px;
+  line-height: 160%;
+  padding-top: 12px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .footer__col--contact {
+    padding-right: 20px;
+  }
+
+  .footer__cols .footer__col:nth-child(2) {
+    flex: 0 0 30%;
+    max-width: 30%;
+  }
+
+  .footer__cols .footer__col:nth-child(3) {
+    flex: 0 0 20%;
+    max-width: 20%;
+  }
+}
+
+@media (max-width: 767px) {
+  .footer {
+    padding: 30px 0 10px;
+  }
+
+  .footer__col--contact,
+  .footer__cols .footer__col:nth-child(2),
+  .footer__cols .footer__col:nth-child(3) {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding-right: 0;
+    padding-bottom: 20px;
+  }
+
+  .footer__note {
+    display: none;
+  }
+}

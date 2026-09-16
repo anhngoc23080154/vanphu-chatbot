@@ -1,0 +1,10 @@
+*.env
+NGOC_RAG_Project.code-workspace
+node_modules/
+dist/
+.env
+.env.*.local
+.vercel/
+__pycache__/
+*.pyc
+.venv/

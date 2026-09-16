@@ -1,0 +1,270 @@
+/* Header: nền trắng, fixed, bám theo thông số của section#headerv3 trên vanphu.vn */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: var(--z-header);
+  background-color: var(--white);
+  padding: 10px 72px;
+  transition:
+    background 0.2s,
+    box-shadow 0.3s;
+}
+
+.header--sticky {
+  box-shadow: var(--shadow-header);
+}
+
+.header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 21%;
+  min-width: 0;
+}
+
+.header__logo img {
+  width: 230px;
+  height: auto;
+  object-fit: contain;
+}
+
+.header__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* Menu ngang */
+.header__menu {
+  display: flex;
+  align-items: center;
+}
+
+.header__menu > li:not(:last-child) {
+  margin-right: 32px;
+}
+
+.header__menu a span {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 21px;
+  color: var(--color-text-2);
+  transition: color 0.3s;
+  white-space: nowrap;
+}
+
+.header__menu a:hover span {
+  color: var(--color-pr);
+}
+
+/* Icon yêu thích */
+.header__wishlist {
+  display: inline-flex;
+  align-items: center;
+  color: var(--neutral-pr);
+  padding: 4px;
+  transition: color 0.3s;
+}
+
+.header__wishlist:hover {
+  color: var(--color-pr);
+}
+
+/* Chuyển ngữ VI | EN */
+.header__lang {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 16px;
+}
+
+.header__lang button {
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+  transition: color 0.3s;
+  padding: 0;
+}
+
+.header__lang button.is-current {
+  color: var(--color-pr);
+}
+
+.header__lang button:hover {
+  color: var(--color-pr);
+}
+
+.header__lang-divider {
+  width: 1px;
+  height: 14px;
+  background: #ccc;
+}
+
+/* Nút hamburger - chỉ hiện trên tablet/mobile */
+.header__toggle {
+  display: none;
+  position: relative;
+  width: 25px;
+  height: 22px;
+  padding: 0;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.header__toggle span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  border-radius: 50px;
+  background: var(--neutral-pr);
+  transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+}
+
+.header__toggle--open span:nth-child(1) {
+  transform: translateY(10px) rotate(45deg);
+}
+
+.header__toggle--open span:nth-child(2) {
+  opacity: 0;
+}
+
+.header__toggle--open span:nth-child(3) {
+  transform: translateY(-10px) rotate(-45deg);
+}
+
+/* ===== Drawer menu cho mobile ===== */
+.mobile-menu__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  z-index: var(--z-drawer);
+}
+
+.mobile-menu__overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(320px, 85vw);
+  height: 100%;
+  background: var(--white);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: calc(var(--z-drawer) + 1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.mobile-menu.is-open {
+  transform: translateX(0);
+}
+
+.mobile-menu__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--bder-color);
+}
+
+.mobile-menu__logo {
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+}
+
+.mobile-menu__head button {
+  color: var(--neutral-pr);
+  display: inline-flex;
+  padding: 4px;
+}
+
+.mobile-menu__list li {
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.mobile-menu__list a {
+  display: block;
+  padding: 16px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-2);
+  transition: color 0.3s;
+}
+
+.mobile-menu__list a:hover {
+  color: var(--color-pr);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1200px) {
+  .header {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .header__menu > li:not(:last-child) {
+    margin-right: 16px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .header__toggle {
+    display: flex;
+  }
+
+  .header__nav {
+    display: none;
+  }
+
+  .header__left {
+    flex: 1 1 auto;
+  }
+
+  .header__right {
+    flex: 0 1 auto;
+  }
+
+  .header__logo img {
+    width: 172px;
+  }
+}
+
+@media (max-width: 767px) {
+  .header {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .header__lang {
+    padding-left: 8px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 468px) {
+  .header__logo img {
+    width: 122px;
+  }
+}
