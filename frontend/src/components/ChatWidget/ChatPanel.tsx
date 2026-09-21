@@ -8,12 +8,6 @@ interface ChatPanelProps {
   onClose: () => void
 }
 
-const SUGGESTIONS = [
-  'Văn Phú có những dự án nào?',
-  'Thông tin dự án Vlasta Phú Thuận?',
-  'Liên hệ tư vấn bằng cách nào?',
-]
-
 export function ChatPanel({ open, onClose }: ChatPanelProps) {
   const { messages, isLoading, error, send, reset } = useChat()
   const [input, setInput] = useState('')
@@ -107,21 +101,6 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
         {error && (
           <div className="chat-panel__error" role="alert">
             {error}
-          </div>
-        )}
-
-        {messages.length <= 1 && !isLoading && (
-          <div className="chat-panel__suggestions">
-            {SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => submit(suggestion)}
-                tabIndex={open ? 0 : -1}
-              >
-                {suggestion}
-              </button>
-            ))}
           </div>
         )}
       </div>

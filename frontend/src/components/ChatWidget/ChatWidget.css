@@ -304,31 +304,6 @@
   border-radius: 8px;
 }
 
-/* Gợi ý câu hỏi nhanh */
-.chat-panel__suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.chat-panel__suggestions button {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--color-pr);
-  background: var(--white);
-  border: 1px solid var(--color-pr);
-  border-radius: 20px;
-  padding: 6px 12px;
-  text-align: left;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.chat-panel__suggestions button:hover {
-  background: var(--color-pr);
-  color: var(--white);
-}
-
 /* ===== Ô nhập ===== */
 .chat-panel__form {
   display: flex;
