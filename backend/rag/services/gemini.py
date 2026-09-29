@@ -19,8 +19,16 @@ from ..errors import ConfigurationError, UpstreamRateLimited, UpstreamTimeout
 
 logger = logging.getLogger(__name__)
 
-# Mã lỗi nên thử model khác thay vì báo lỗi ngay.
+# Mã lỗi tạm thời, nên thử lại hoặc đổi model thay vì báo lỗi ngay.
+# Riêng 404 nghĩa là model không còn dùng được, thử lại vô ích.
 _RETRYABLE_CODES = {429, 500, 502, 503, 504}
+
+# Số lần thử mỗi model khi sinh câu trả lời, và số lần thử khi embed câu hỏi.
+_GENERATE_ATTEMPTS = 2
+_EMBED_QUERY_ATTEMPTS = 2
+# Thời gian chờ giữa hai lần thử, giây. Giữ ngắn vì frontend chỉ đợi 30 giây.
+_RETRY_WAIT = 1.5
+_RETRY_WAIT_MAX = 4.0
 
 _RETRY_DELAY_RE = re.compile(r"(\d+(?:\.\d+)?)s")
 
@@ -165,23 +173,42 @@ class GeminiService:
         return [_l2_normalize(list(item.values)) for item in response.embeddings]
 
     async def embed_query(self, text: str) -> list[float]:
-        """Vector cho câu hỏi của khách (task_type RETRIEVAL_QUERY)."""
-        try:
-            vectors = await asyncio.wait_for(
-                self._embed([text], "RETRIEVAL_QUERY"),
-                timeout=self._settings.embed_timeout,
-            )
-        except asyncio.TimeoutError as exc:
-            raise UpstreamTimeout() from exc
-        except Exception as exc:  # noqa: BLE001 - phân loại lại bên dưới
-            if _error_code(exc) == 429:
-                logger.warning("Gemini embed bị giới hạn tần suất: %s", exc)
-                raise UpstreamRateLimited() from exc
-            logger.exception("Gemini embed thất bại")
-            raise UpstreamRateLimited(
-                "Trợ lý chưa truy cập được hệ thống tri thức. Bạn vui lòng thử lại sau ít phút."
-            ) from exc
-        return vectors[0]
+        """Vector cho câu hỏi của khách (task_type RETRIEVAL_QUERY).
+
+        Thử lại một lần khi gặp lỗi tạm thời, vì Gemini thỉnh thoảng trả 503 do
+        quá tải và một lần chờ ngắn thường là đủ.
+        """
+        last_error: Exception | None = None
+        for attempt in range(1, _EMBED_QUERY_ATTEMPTS + 1):
+            try:
+                vectors = await asyncio.wait_for(
+                    self._embed([text], "RETRIEVAL_QUERY"),
+                    timeout=self._settings.embed_timeout,
+                )
+                return vectors[0]
+            except asyncio.TimeoutError as exc:
+                raise UpstreamTimeout() from exc
+            except Exception as exc:  # noqa: BLE001 - phân loại lại bên dưới
+                last_error = exc
+                code = _error_code(exc)
+                if code in _RETRYABLE_CODES and attempt < _EMBED_QUERY_ATTEMPTS:
+                    wait = min(retry_delay_seconds(exc) or _RETRY_WAIT, _RETRY_WAIT_MAX)
+                    logger.warning(
+                        "Embed lỗi %s, chờ %.1fs rồi thử lại (lần %s/%s)",
+                        code, wait, attempt, _EMBED_QUERY_ATTEMPTS,
+                    )
+                    await asyncio.sleep(wait)
+                    continue
+                break
+
+        code = _error_code(last_error) if last_error else None
+        if code == 429:
+            logger.warning("Gemini embed hết hạn mức: %s", quota_summary(last_error))
+            raise UpstreamRateLimited() from last_error
+        logger.error("Gemini embed thất bại (mã %s): %s", code, last_error)
+        raise UpstreamRateLimited(
+            "Trợ lý chưa truy cập được hệ thống tri thức. Bạn vui lòng thử lại sau ít phút."
+        ) from last_error
 
     async def embed_documents(
         self,
@@ -261,37 +288,62 @@ class GeminiService:
         )
 
         last_error: Exception | None = None
-        deadline = asyncio.get_running_loop().time() + self._settings.generate_timeout
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + self._settings.generate_timeout
 
         for model in self._settings.chat_model_chain:
-            remaining = deadline - asyncio.get_running_loop().time()
-            if remaining <= 1:
-                break
-            try:
-                response = await asyncio.wait_for(
-                    client.aio.models.generate_content(model=model, contents=contents, config=config),
-                    timeout=remaining,
-                )
-            except asyncio.TimeoutError as exc:
-                last_error = exc
-                logger.warning("Model %s phản hồi quá lâu", model)
-                continue
-            except Exception as exc:  # noqa: BLE001
-                last_error = exc
-                if _error_code(exc) in _RETRYABLE_CODES:
-                    logger.warning("Model %s lỗi %s, thử model tiếp theo", model, _error_code(exc))
-                    continue
-                logger.exception("Model %s lỗi không thể thử lại", model)
-                continue
+            # Lỗi 503 của Gemini thường là đợt quá tải ngắn, thử lại cùng model
+            # trước khi chuyển sang model khác.
+            for attempt in range(1, _GENERATE_ATTEMPTS + 1):
+                remaining = deadline - loop.time()
+                if remaining <= 1:
+                    break
+                try:
+                    response = await asyncio.wait_for(
+                        client.aio.models.generate_content(
+                            model=model, contents=contents, config=config
+                        ),
+                        timeout=remaining,
+                    )
+                except asyncio.TimeoutError as exc:
+                    last_error = exc
+                    logger.warning("Model %s phản hồi quá lâu", model)
+                    break
+                except Exception as exc:  # noqa: BLE001
+                    last_error = exc
+                    code = _error_code(exc)
+                    if code not in _RETRYABLE_CODES:
+                        # 404 nghĩa là model không còn dùng được với API key này.
+                        logger.warning(
+                            "Model %s không dùng được (mã %s), chuyển model khác", model, code
+                        )
+                        break
+                    if attempt < _GENERATE_ATTEMPTS and remaining > 4:
+                        wait = min(retry_delay_seconds(exc) or _RETRY_WAIT, _RETRY_WAIT_MAX)
+                        logger.warning(
+                            "Model %s lỗi %s, chờ %.1fs rồi thử lại (lần %s/%s)",
+                            model, code, wait, attempt, _GENERATE_ATTEMPTS,
+                        )
+                        await asyncio.sleep(wait)
+                        continue
+                    logger.warning("Model %s lỗi %s, chuyển model khác", model, code)
+                    break
 
-            text = (getattr(response, "text", None) or "").strip()
-            if text:
-                return text, model
-            logger.warning("Model %s trả về nội dung rỗng (có thể bị chặn an toàn)", model)
+                text = (getattr(response, "text", None) or "").strip()
+                if text:
+                    if attempt > 1 or model != self._settings.gemini_chat_model:
+                        logger.info("Trả lời bằng model %s (lần thử %s)", model, attempt)
+                    return text, model
+                logger.warning("Model %s trả về nội dung rỗng (có thể bị chặn an toàn)", model)
+                break
 
         if isinstance(last_error, asyncio.TimeoutError):
             raise UpstreamTimeout()
-        logger.error("Tất cả model đều thất bại: %s", last_error)
+        logger.error(
+            "Tất cả model đều thất bại (%s): %s",
+            ", ".join(self._settings.chat_model_chain),
+            last_error,
+        )
         raise UpstreamRateLimited()
 
 

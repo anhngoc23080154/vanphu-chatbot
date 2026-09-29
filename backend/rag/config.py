@@ -36,7 +36,12 @@ class Settings(BaseSettings):
     # --- Gemini ---
     gemini_api_key: str = ""
     gemini_chat_model: str = "gemini-3.1-flash-lite"
-    gemini_fallback_models: str = "gemini-2.5-flash-lite,gemini-2.5-flash"
+    # Model dự phòng khi model chính trả về 503 vì quá tải bên Google.
+    # Đã kiểm tra trực tiếp bằng API key của dự án: các model 2.5 đã bị Google
+    # ngừng cấp cho người dùng mới (trả về 404), không dùng làm dự phòng được.
+    # 'gemini-flash-lite-latest' là bí danh luôn trỏ tới bản flash-lite hiện hành
+    # nên đặt cuối cùng để không chết khi Google đổi tên model.
+    gemini_fallback_models: str = "gemini-3.5-flash-lite,gemini-flash-lite-latest"
     gemini_embed_model: str = "gemini-embedding-001"
     embed_dim: int = 768
     # Gemini tính hạn mức theo TỪNG đoạn trong lô, không phải theo số lần gọi.

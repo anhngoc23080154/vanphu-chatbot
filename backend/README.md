@@ -193,6 +193,7 @@ Nếu không muốn phụ thuộc Vercel Cron, có thể dùng GitHub Actions v�
 | Hiện tượng | Nguyên nhân thường gặp |
 |---|---|
 | `403 PERMISSION_DENIED` từ Gemini | API key thuộc project bị chặn. Tạo key mới tại Google AI Studio. |
-| `503` khi chat | Hết hạn mức Gemini trong phút, hoặc Supabase chưa cấu hình. Xem log. |
+| `503` khi chat | Thường do Gemini quá tải nhất thời. Backend tự thử lại và đổi model dự phòng. Nếu vẫn lỗi, kiểm tra `GEMINI_FALLBACK_MODELS` còn dùng được không. |
+| Tất cả model đều thất bại | Model trong `GEMINI_FALLBACK_MODELS` có thể đã bị Google ngừng cấp (trả 404). Chạy `scripts.check_models` để xem model nào còn dùng được. |
 | Chat trả lời "chưa có thông tin" | Chưa chạy `scripts.ingest`, hoặc bảng `documents` rỗng. |
 | Frontend báo lỗi CORS | Thiếu domain frontend trong `CORS_ORIGINS`. |
