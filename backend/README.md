@@ -84,6 +84,44 @@ Giỏ hàng **không** embedding từng căn. Lý do: 739 căn phần lớn trù
 hỏi về mã căn cần độ chính xác tuyệt đối. Thay vào đó bảng `units` phục vụ tra cứu
 SQL, còn các đoạn tóm tắt phục vụ câu hỏi ngữ nghĩa ("căn 2 phòng ngủ rộng bao nhiêu").
 
+## Tính lãi vay (tính năng demo)
+
+Khách hỏi bằng câu tự nhiên ngay trong chat, ví dụ *Tôi dự định vay 10 tỷ, tính cho
+tôi số tiền phải trả sau 1 năm*. Backend nhận diện bằng regex rồi **tự tính bằng
+Python**, mô hình ngôn ngữ chỉ diễn đạt lại con số. Làm vậy vì mô hình dễ sai số học.
+
+Hai cách tính được trình bày song song:
+
+| Cách | Công thức | Ví dụ 10 tỷ, 5%/năm, 1 năm |
+|---|---|---|
+| Lãi đơn trên toàn bộ gốc | gốc × lãi suất × số năm | lãi 500 triệu, tổng **10,5 tỷ** |
+| Dư nợ giảm dần, gốc trả đều | lãi tính trên phần gốc còn lại | tháng đầu 875 triệu, tổng 10,271 tỷ |
+
+Bộ đọc dữ kiện hiểu được: `10 tỷ`, `1,5 tỷ`, `1.5 tỷ`, `3 tỉ`, `500 triệu`,
+`2 tỷ 500 triệu`, `800 tr`, `10.000.000.000`; thời hạn `1 năm`, `20 năm`, `18 tháng`,
+`1 năm 6 tháng`; lãi suất `5%`, `lãi suất 8,5%/năm`.
+
+Hai mức cấu hình trong `.env`:
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `LOAN_ANNUAL_RATE` | `5.0` | Lãi suất tham chiếu, dùng khi khách không tự nêu mức |
+| `LOAN_DEFAULT_TERM_MONTHS` | `240` | Kỳ hạn giả định khi khách chỉ nêu số tiền |
+
+Mức 5% chọn cho khớp ví dụ minh hoạ. Vay mua nhà thực tế ở Việt Nam thường khoảng
+10 đến 11 phần trăm mỗi năm, đổi biến trên nếu muốn số liệu sát thị trường hơn.
+
+Một số điểm đã xử lý để tránh nhận diện sai:
+
+- Câu hỏi *chậm thanh toán bị phạt lãi suất bao nhiêu* có chữ "lãi suất" nhưng không
+  phải yêu cầu tính vay, nên vẫn đi theo luồng tra cứu tri thức.
+- *Vay 70% giá trị căn hộ* thì 70% là tỷ lệ vay, không bị hiểu thành lãi suất.
+- *Căn hộ hướng Nam* bỏ dấu thành "HUONG NAM", không bị hiểu thành số năm.
+- Câu nối tiếp *Thế vay 20 năm thì sao* kế thừa số tiền từ lượt hỏi trước.
+
+Mọi con số đều kèm câu nói rõ là số liệu mô phỏng để tham khảo, không phải cam kết
+của chủ đầu tư hay ngân hàng.
+
 ## Thêm ảnh, poster dự án
 
 1. Chép ảnh vào `data/media/`.

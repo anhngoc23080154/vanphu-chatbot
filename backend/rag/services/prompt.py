@@ -6,6 +6,8 @@ from typing import Any
 
 from ..ingest.units import describe_db_row
 from ..schemas import HistoryItem
+from .loan import LoanResult
+from .loan import describe as describe_loan
 from .query_analyzer import QueryIntent
 from .retriever import RetrievalBundle
 from .supabase_repo import Doc
@@ -30,6 +32,8 @@ NGUYÊN TẮC TRẢ LỜI
 4. Khi ngữ cảnh có mục "DỮ LIỆU GIỎ HÀNG", ưu tiên dùng số liệu ở đó cho câu hỏi về mã căn, diện tích, hướng, số phòng ngủ. Nếu ghi chú cho biết chỉ hiển thị một phần, hãy nêu tổng số căn phù hợp và gợi ý khách lọc thêm theo tháp, tầng hoặc số phòng ngủ.
 5. Khi ngữ cảnh có mục "HÌNH ẢNH - TÀI LIỆU", có thể nhắc khách xem hình hoặc liên kết đính kèm ngay dưới câu trả lời. Không tự tạo hay đoán đường dẫn.
 6. Khi nói về giá bán, chính sách bán hàng, tiến độ hoặc pháp lý, nhắc ngắn gọn rằng thông tin có thể thay đổi và khách nên liên hệ để cập nhật mới nhất.
+7. Khi ngữ cảnh có mục "TÍNH LÃI VAY" kèm số liệu, hãy trình bày lại đúng các con số đó. Sao chép CHÍNH XÁC từng con số và đơn vị, tuyệt đối không tự cộng trừ, không làm tròn lại, không tính thêm con số nào khác. Nêu trước kết quả theo cách lãi đơn, rồi nói thêm cách dư nợ giảm dần để khách so sánh. Kết thúc phần này bằng một câu nói rõ đây là số liệu mô phỏng chỉ để tham khảo, không phải cam kết của chủ đầu tư hay ngân hàng, lãi suất thực tế do ngân hàng quyết định tại thời điểm vay.
+8. Nếu ngữ cảnh cho biết khách chưa nêu số tiền vay, hãy hỏi khách số tiền dự định vay và thời hạn mong muốn. Không tự giả định con số.
 
 CÁCH TRÌNH BÀY
 - Trả lời bằng tiếng Việt, xưng "em", gọi khách là "anh/chị", giọng thân thiện và chuyên nghiệp.
@@ -84,7 +88,10 @@ def _format_media(docs: list[Doc]) -> str:
 
 
 def build_context(
-    bundle: RetrievalBundle, attachments: list[Doc], intent: QueryIntent | None = None
+    bundle: RetrievalBundle,
+    attachments: list[Doc],
+    intent: QueryIntent | None = None,
+    loan_result: LoanResult | None = None,
 ) -> str:
     """Ghép các khối ngữ cảnh, cắt bớt nếu vượt giới hạn ký tự."""
     blocks: list[str] = []
@@ -99,6 +106,18 @@ def build_context(
             "Không tìm thấy căn nào khớp tiêu chí khách hỏi trong bảng hàng của dự án. "
             "Hãy nói rõ điều này và gợi ý khách kiểm tra lại mã căn hoặc đổi tiêu chí tìm kiếm."
         )
+    if loan_result is not None:
+        blocks.append(
+            "TÍNH LÃI VAY (số liệu mô phỏng, đã tính sẵn bằng công cụ)\n"
+            + describe_loan(loan_result)
+        )
+    elif intent is not None and intent.loan_missing_amount():
+        blocks.append(
+            "TÍNH LÃI VAY\n"
+            "Khách quan tâm tới vay vốn nhưng chưa cho biết số tiền dự định vay. "
+            "Hãy hỏi khách số tiền và thời hạn mong muốn."
+        )
+
     if attachments:
         blocks.append("HÌNH ẢNH - TÀI LIỆU\n" + _format_media(attachments))
 

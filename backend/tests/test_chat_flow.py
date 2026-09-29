@@ -373,3 +373,92 @@ def test_keepalive_tu_choi_khi_sai_secret(monkeypatch):
             )
     finally:
         config.get_settings.cache_clear()
+
+
+# --- Tính lãi vay ------------------------------------------------------------
+async def test_dua_so_lieu_vay_da_tinh_san_vao_ngu_canh():
+    gemini = FakeGemini()
+    repo = FakeRepo(docs=[make_doc("thông tin chung")])
+    await service(gemini, repo).answer(
+        ChatRequest(
+            message="Tôi dự định vay 10 tỷ, tính cho tôi số tiền phải trả sau 1 năm",
+            session_id="s1",
+            history=[],
+        )
+    )
+    context = gemini.context_text
+    assert "TÍNH LÃI VAY" in context
+    # Con số phải được tính sẵn bằng Python, không để mô hình tự làm toán.
+    assert "10,5 tỷ đồng" in context
+    assert "10,271 tỷ đồng" in context
+    assert "5% mỗi năm" in context
+
+
+async def test_dung_lai_suat_khach_neu_thay_vi_mac_dinh():
+    gemini = FakeGemini()
+    repo = FakeRepo(docs=[make_doc("x")])
+    await service(gemini, repo, loan_annual_rate=5.0).answer(
+        ChatRequest(
+            message="Vay 1 tỷ trong 1 năm lãi suất 10% thì tổng phải trả bao nhiêu?",
+            session_id="s1",
+            history=[],
+        )
+    )
+    context = gemini.context_text
+    assert "10% mỗi năm (theo mức khách đưa ra)" in context
+    assert "1,1 tỷ đồng" in context
+
+
+async def test_dung_ky_han_gia_dinh_khi_khach_khong_neu():
+    gemini = FakeGemini()
+    repo = FakeRepo(docs=[make_doc("x")])
+    await service(gemini, repo, loan_default_term_months=240).answer(
+        ChatRequest(message="Tôi vay 2 tỷ thì phải trả bao nhiêu?", session_id="s1", history=[])
+    )
+    assert "20 năm (240 tháng)" in gemini.context_text
+
+
+async def test_hoi_lai_khi_khach_chua_neu_so_tien():
+    gemini = FakeGemini()
+    repo = FakeRepo(docs=[make_doc("x")])
+    await service(gemini, repo).answer(
+        ChatRequest(message="Tôi muốn vay tiền, tính giúp tôi", session_id="s1", history=[])
+    )
+    context = gemini.context_text
+    assert "chưa cho biết số tiền" in context
+    assert "10,5 tỷ" not in context  # không tự bịa con số
+
+
+async def test_van_tra_loi_duoc_khi_khong_co_tri_thuc_nhung_co_phep_tinh():
+    """Câu hỏi thuần tính toán vẫn phải trả lời, dù vector search rỗng."""
+    gemini = FakeGemini()
+    repo = FakeRepo()  # không có tài liệu nào
+    response = await service(gemini, repo).answer(
+        ChatRequest(message="Vay 10 tỷ 1 năm thì trả bao nhiêu?", session_id="s1", history=[])
+    )
+    assert gemini.generate_calls == 1
+    assert "chưa có thông tin" not in response.reply
+    assert "10,5 tỷ đồng" in gemini.context_text
+
+
+async def test_cau_hoi_lai_suat_phat_khong_kich_hoat_may_tinh():
+    gemini = FakeGemini()
+    repo = FakeRepo(docs=[make_doc("Câu hỏi: phạt chậm thanh toán\nTrả lời: 0,05%/ngày")])
+    await service(gemini, repo).answer(
+        ChatRequest(
+            message="Khách hàng chậm thanh toán sẽ bị phạt lãi suất bao nhiêu?",
+            session_id="s1",
+            history=[],
+        )
+    )
+    assert "TÍNH LÃI VAY" not in gemini.context_text
+
+
+async def test_prompt_buoc_sao_chep_dung_con_so():
+    gemini = FakeGemini()
+    repo = FakeRepo(docs=[make_doc("x")])
+    await service(gemini, repo).answer(
+        ChatRequest(message="Vay 10 tỷ 1 năm trả bao nhiêu?", session_id="s1", history=[])
+    )
+    assert "CHÍNH XÁC" in gemini.last_system
+    assert "mô phỏng" in gemini.last_system

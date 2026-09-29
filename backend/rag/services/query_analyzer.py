@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 
 from ..schemas import HistoryItem
 from ..text import clean, normalize_key
+from . import loan
 
 # --- Mã căn -----------------------------------------------------------------
 # A-06-01 / a 06 01 (mã theo bản vẽ thi công)
@@ -84,6 +85,35 @@ class QueryIntent:
     wants_stats: bool = False
     is_followup: bool = False
 
+    # --- Tính lãi vay (tính năng demo) ---
+    loan_principal: int | None = None
+    loan_months: int | None = None
+    loan_rate: float | None = None
+    loan_keyword: bool = False
+    loan_borrow_intent: bool = False
+    loan_wants_calc: bool = False
+
+    def needs_loan(self) -> bool:
+        """Chỉ tính khi có cả từ khoá vay và số tiền, tránh chiếm câu hỏi khác.
+
+        Ví dụ câu 'khách chậm thanh toán bị phạt lãi suất bao nhiêu' cũng chứa
+        từ 'lãi suất' nhưng không có số tiền vay nên vẫn đi theo luồng tra cứu
+        tri thức bình thường.
+        """
+        return self.loan_keyword and self.loan_principal is not None
+
+    def loan_missing_amount(self) -> bool:
+        """Khách muốn vay và muốn được tính, nhưng chưa cho biết số tiền.
+
+        Bắt buộc có ý định đi vay (không chỉ nhắc hai chữ lãi suất) để câu hỏi
+        như 'chậm thanh toán bị phạt lãi suất bao nhiêu' không bị hiểu sai.
+        """
+        return (
+            self.loan_borrow_intent
+            and self.loan_wants_calc
+            and self.loan_principal is None
+        )
+
     @property
     def unit_codes(self) -> list[str]:
         return [*self.unit_codes_plain, *self.unit_codes_commercial, *self.unit_codes_alt]
@@ -155,6 +185,14 @@ def _analyze_text(text: str) -> QueryIntent:
 
     intent.wants_image = any(keyword in text for keyword in _IMAGE_KEYWORDS)
     intent.wants_stats = any(keyword in text for keyword in _STATS_KEYWORDS)
+
+    intent.loan_keyword = loan.has_loan_intent(text)
+    intent.loan_borrow_intent = loan.has_borrow_intent(text)
+    intent.loan_wants_calc = loan.wants_calculation(text)
+    if intent.loan_keyword:
+        intent.loan_principal = loan.parse_principal(text)
+        intent.loan_months = loan.parse_term_months(text)
+        intent.loan_rate = loan.parse_rate(text)
     return intent
 
 
@@ -166,6 +204,13 @@ def _merge(primary: QueryIntent, previous: QueryIntent) -> QueryIntent:
     for name in ("tower", "floor", "bedroom_count", "product_type"):
         if getattr(primary, name) is None:
             setattr(primary, name, getattr(previous, name))
+    for name in ("loan_principal", "loan_months", "loan_rate"):
+        if getattr(primary, name) is None:
+            setattr(primary, name, getattr(previous, name))
+    if previous.loan_keyword:
+        primary.loan_keyword = True
+    if previous.loan_borrow_intent:
+        primary.loan_borrow_intent = True
     return primary
 
 
@@ -184,11 +229,13 @@ def analyze(message: str, history: list[HistoryItem] | None = None) -> QueryInte
 
     is_short = len(normalized.split()) <= 6
     has_anaphora = any(keyword in normalized for keyword in _FOLLOWUP_KEYWORDS)
-    if (is_short or has_anaphora) and not intent.needs_units():
+    # Câu kiểu 'thế vay 20 năm thì sao' có số tiền ở lượt trước.
+    loan_followup = intent.loan_keyword and intent.loan_principal is None
+    if (is_short or has_anaphora or loan_followup) and not intent.needs_units():
         previous_raw = _last_user_message(history)
         if previous_raw:
             previous = _analyze_text(normalize_key(previous_raw))
-            if previous.needs_units():
+            if previous.needs_units() or previous.needs_loan():
                 intent.is_followup = True
                 _merge(intent, previous)
     return intent

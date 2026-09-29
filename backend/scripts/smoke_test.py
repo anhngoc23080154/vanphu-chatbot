@@ -33,11 +33,21 @@ QUESTIONS: list[tuple[str, str]] = [
     ("Người nước ngoài có mua được không?", "Theo Luật Nhà ở 2023, hợp đồng thuê dài hạn"),
     ("Căn Z-99-99 còn không?", "Nói rõ không tìm thấy căn này"),
     ("Giá vàng hôm nay bao nhiêu?", "Từ chối lịch sự, kéo về chủ đề dự án"),
+    # --- Tính lãi vay (tính năng demo) ---
+    ("Tôi dự định vay 10 tỷ, tính cho tôi số tiền phải trả sau 1 năm",
+     "Lãi đơn: lãi 500 triệu, tổng 10,5 tỷ. Kèm dư nợ giảm dần tổng 10,271 tỷ"),
+    ("Vay 2 tỷ trong 20 năm lãi suất 8,5% thì mỗi tháng trả bao nhiêu?",
+     "Tháng đầu 22,5 triệu, tháng cuối 8,39 triệu, tổng 3,707 tỷ"),
+    ("Tôi muốn vay tiền mua căn hộ, tính giúp tôi",
+     "Hỏi lại số tiền và thời hạn, không tự bịa con số"),
+    ("Khách hàng chậm thanh toán sẽ bị phạt lãi suất bao nhiêu?",
+     "Trả lời 0,05%/ngày từ Q&A, KHÔNG chuyển sang máy tính lãi vay"),
 ]
 
 # Cặp câu hỏi kiểm tra khả năng hiểu ngữ cảnh nối tiếp.
 FOLLOWUP = [
     ("Căn A-06-01 diện tích bao nhiêu?", "Còn hướng ban công thì sao?"),
+    ("Vay 10 tỷ trong 1 năm thì trả bao nhiêu?", "Thế vay 20 năm thì sao?"),
 ]
 
 

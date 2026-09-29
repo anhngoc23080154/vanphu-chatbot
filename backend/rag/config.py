@@ -63,6 +63,14 @@ class Settings(BaseSettings):
     media_sim_threshold: float = 0.72
     units_limit: int = 20
 
+    # --- Tính lãi vay (tính năng demo, số liệu mô phỏng) ---
+    # Lãi suất tham chiếu phần trăm mỗi năm, dùng khi khách không tự nêu mức.
+    # Đặt 5 để khớp ví dụ minh hoạ; vay mua nhà thực tế ở Việt Nam thường
+    # khoảng 10 đến 11 phần trăm mỗi năm nếu muốn số liệu sát thị trường hơn.
+    loan_annual_rate: float = 5.0
+    # Thời hạn giả định khi khách chỉ nêu số tiền mà không nói vay bao lâu.
+    loan_default_term_months: int = 240
+
     # --- Ngân sách thời gian (giây); client timeout 30s ---
     embed_timeout: float = 8.0
     generate_timeout: float = 20.0

@@ -13,8 +13,9 @@ from ..config import Settings, get_settings
 from ..errors import UpstreamTimeout
 from ..schemas import Attachment, ChatRequest, ChatResponse
 from .gemini import GeminiService, get_gemini_service
+from .loan import LoanResult, calculate
 from .prompt import NO_CONTEXT_REPLY, SYSTEM_PROMPT, build_context, build_contents
-from .query_analyzer import analyze, build_retrieval_text
+from .query_analyzer import QueryIntent, analyze, build_retrieval_text
 from .retriever import Retriever, select_attachments
 from .supabase_repo import SupabaseRepo, get_repo
 
@@ -88,16 +89,49 @@ class ChatService:
             if doc.metadata.get("url")
         ]
 
-        if bundle.is_empty:
+        loan_result = self._compute_loan(intent)
+        has_loan_context = loan_result is not None or intent.loan_missing_amount()
+
+        if bundle.is_empty and not has_loan_context:
             logger.info("Không tìm thấy ngữ cảnh cho câu hỏi: %s", request.message[:80])
             return NO_CONTEXT_REPLY, [], "none"
 
-        context = build_context(bundle, media_docs, intent)
+        context = build_context(bundle, media_docs, intent, loan_result)
         contents = build_contents(
             self.gemini.types, request.history, request.message, context, intent
         )
         raw_reply, model = await self.gemini.generate(contents, SYSTEM_PROMPT)
         return sanitize_reply(raw_reply), attachments, model
+
+    def _compute_loan(self, intent: QueryIntent) -> LoanResult | None:
+        """Tính lãi vay bằng Python khi câu hỏi có đủ dữ kiện.
+
+        Mô hình ngôn ngữ chỉ diễn đạt lại kết quả đã tính, không tự làm toán,
+        vì mô hình dễ sai số học.
+        """
+        if not intent.needs_loan():
+            return None
+
+        rate = (
+            intent.loan_rate
+            if intent.loan_rate is not None
+            else self.settings.loan_annual_rate
+        )
+        months = intent.loan_months or self.settings.loan_default_term_months
+        try:
+            result = calculate(intent.loan_principal, rate, months)
+        except ValueError as exc:
+            logger.warning("Không tính được lãi vay: %s", exc)
+            return None
+
+        result.rate_from_customer = intent.loan_rate is not None
+        logger.info(
+            "Tính lãi vay: gốc=%s, lãi suất=%s%%, kỳ hạn=%s tháng",
+            intent.loan_principal,
+            rate,
+            months,
+        )
+        return result
 
 
 _service: ChatService | None = None
